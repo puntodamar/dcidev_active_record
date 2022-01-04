@@ -24,8 +24,38 @@ module DcidevActiveRecord
         end
       end
 
-      def test
-        p "from gem"
+      def mysql_date_builder(field)
+        "DATE(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
+      end
+    
+      def mysql_time_builder(field)
+        "TIME(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
+      end
+
+      def postgresql_date_builder(field)
+        "DATE(#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'::INTERVAL)"
+      end
+  
+      def postgresql_time_builder(field)
+        "#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'"
+      end
+
+      def set_order
+        return unless self.class.column_names.include?("view_order")
+        if self.view_order.present?
+          self.reorder
+        else
+          self.view_order = self.class.where.not(id: self.id).count + 1
+          self.save
+        end
+      end
+
+      def reorder
+        return unless self.class.column_names.include?("view_order")
+        return unless self.class.where(view_order: self.view_order).where.not(id: self.id).present?
+        self.class.order(view_order: :asc, updated_at: :desc).each.with_index(1) do |f, i|
+          f.update(view_order: i)
+        end
       end
   end
 end
