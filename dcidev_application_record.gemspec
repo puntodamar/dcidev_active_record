@@ -6,6 +6,6 @@ Gem::Specification.new do |s|
     s.description = "Testing phase"
     s.authors = ["Punto Damar P"]
     s.email = ["punto@privyid.tech"]
-    s.files = Dir.glob('{lib}/**/*.rb')
+    s.files = Dir["{bin,lib}/**/*", "README.md"]
     s.require_paths = ["lib"]
   end
