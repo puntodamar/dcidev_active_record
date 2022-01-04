@@ -1,8 +1,7 @@
-require 'application_record'
 require 'active_record'
 
 module DcidevApplicationRecord
-  ApplicationRecord.class_eval do
+  ActiveRecord.class_eval do
     def update_by_params(params, set_nil = true)
         ActiveRecord::Base.transaction do
           self.class.column_names.each do |c|
