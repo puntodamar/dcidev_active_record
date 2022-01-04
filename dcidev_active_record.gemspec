@@ -1,8 +1,8 @@
 Gem::Specification.new do |s|
-    s.name = "dcidev_application_record"
+    s.name = "dcidev_active_record"
     s.version = "0.0.1"
     # s.date = ""
-    s.summary = "This gem extends ApplicationRecord features"
+    s.summary = "This gem extends ActiveRecord features"
     s.description = "Testing phase"
     s.authors = ["Punto Damar P"]
     s.email = ["punto@privyid.tech"]
