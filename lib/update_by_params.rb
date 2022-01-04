@@ -1,7 +1,8 @@
 require 'application_record'
 require 'active_record'
 
-ApplicationRecord.class_eval do
+module DcidevApplicationRecord
+  ApplicationRecord.class_eval do
     def update_by_params(params, set_nil = true)
         ActiveRecord::Base.transaction do
           self.class.column_names.each do |c|
@@ -27,4 +28,5 @@ ApplicationRecord.class_eval do
       def test
         p "from gem"
       end
+  end
 end
