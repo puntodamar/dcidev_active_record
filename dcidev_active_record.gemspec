@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
     s.name = "dcidev_active_record"
-    s.version = "0.0.4"
+    s.version = "0.0.5"
     # s.date = ""
     s.summary = "This gem extends ActiveRecord features"
     s.description = "Testing phase"
