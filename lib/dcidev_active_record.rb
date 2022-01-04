@@ -7,7 +7,7 @@ module DcidevActiveRecord
     scope :before_or_equal_to_date, -> (column, date) { where("#{self.date_builder("#{self.table_name}.#{column}")} <= ?", date) }
     scope :after_or_equal_to_date, -> (column, date) { where("#{self.date_builder("#{self.table_name}.#{column}")} >= ?", date) }
     scope :at_time, -> (column, time) { where("#{self.time_builder("#{self.table_name}.#{column}")} LIKE ?", "%#{time}%") }
-    scope :mysql_json_contains,(column, value) -> {"JSON_EXTRACT(#{column}, '$.\"Request-ID\"') LIKE \"%#{value}%\""}
+    scope :mysql_json_contains, -> (column, value) {"JSON_EXTRACT(#{column}, '$.\"Request-ID\"') LIKE \"%#{value}%\""}
 
 
     def update_by_params(params, set_nil = true)
