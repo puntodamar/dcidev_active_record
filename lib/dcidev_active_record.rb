@@ -16,7 +16,9 @@ module DcidevActiveRecord
     scope :after_or_equal_to_date, -> (column, date) { 
       where("#{eval("self.#{ENV['DB']}_date_builder('#{self.table_name}.#{column}')")} >= '#{date}'") 
     }
-    scope :at_time, -> (column, time) { where("#{eval("self.#{ENV['DB']}_time_builder('#{self.table_name}.#{column}')")} #{self.db_like_string(ENV['DB'])} '%#{time}%'") }
+    scope :at_time, -> (column, time) { 
+      where("#{eval("self.#{ENV['DB']}_time_builder('#{self.table_name}.#{column}')")} #{self.db_like_string(ENV['DB'])} '%#{time}%'") 
+    }
     scope :mysql_json_contains, ->(column, key, value) {"JSON_EXTRACT(#{column}, '$.\"#{key}\"') LIKE \"%#{value}%\""}
   end
 
@@ -42,6 +44,7 @@ module DcidevActiveRecord
         self.save
       end
     end
+  
 
     def set_order
       return unless self.class.column_names.include?("view_order")
@@ -62,7 +65,24 @@ module DcidevActiveRecord
     end
 
   class_methods do
-    #E.g: Order.top_ten
+    
+    def new_from_params(params)
+      model = self.new
+      self.column_names.each do |c|
+        begin
+          eval("model.#{c} = params[:#{c.to_sym}]") if params.key?(c.to_sym)
+          eval("model.#{c} = params['#{c}']") if params.key?(c)
+
+        rescue IOError
+          raise "Tidak dapat menyimpan file #{c}"
+        end
+      end
+      params.select{|k, _| !k.is_a?(Symbol) && k.include?("_attributes")}.each do |k, _|
+        eval("model.#{k} = params[:#{k.to_sym}]")
+      end
+      model
+    end
+
     def mysql_date_builder(field)
       "DATE(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
     end
