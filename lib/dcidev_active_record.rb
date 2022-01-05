@@ -43,6 +43,24 @@ module DcidevActiveRecord
       end
     end
 
+    def set_order
+      return unless self.class.column_names.include?("view_order")
+      if self.view_order.present?
+        self.reorder
+      else
+        self.view_order = self.class.where.not(id: self.id).count + 1
+        self.save
+      end
+    end
+
+    def reorder
+      return unless self.class.column_names.include?("view_order")
+      return unless self.class.where(view_order: self.view_order).where.not(id: self.id).present?
+      self.class.order(view_order: :asc, updated_at: :desc).each.with_index(1) do |f, i|
+        f.update(view_order: i)
+      end
+    end
+
   class_methods do
     #E.g: Order.top_ten
     def mysql_date_builder(field)
