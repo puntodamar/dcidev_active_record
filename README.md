@@ -1,1 +1,1 @@
-dcidev_application_record
+tambakan ENV['DB'] = mysql / postgresql
