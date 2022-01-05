@@ -1,28 +1,27 @@
+require 'active_support/concern'
 require 'active_record'
 
 module DcidevActiveRecord
+  extend ActiveSupport::Concern
 
-  ActiveRecord::Base.instance_eval do
-    def mysql_date_builder(field)
-      "DATE(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
-    end
+  included do
+    scope :between_date, -> (column, start_date, end_date) {
+      where("#{eval("self.#{ENV['DB']}_date_builder('#{self.table_name}.#{column}')")} BETWEEN '#{start_date}' AND '#{end_date}'")
+    }
 
-    def mysql_time_builder(field)
-      "TIME(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
-    end
-
-    def postgresql_date_builder(field)
-      "DATE(#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'::INTERVAL)"
-    end
-
-    def postgresql_time_builder(field)
-      "#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'"
-    end
+    scope :before_or_equal_to_date, -> (column, date) { 
+      where("#{eval("self.#{ENV['DB']}_date_builder('#{self.table_name}.#{column}')")} <= '#{date}'") 
+    }
+    
+    scope :after_or_equal_to_date, -> (column, date) { 
+      where("#{eval("self.#{ENV['DB']}_date_builder('#{self.table_name}.#{column}')")} >= '#{date}'") 
+    }
+    scope :at_time, -> (column, time) { where("#{eval("self.#{ENV['DB']}_time_builder('#{self.table_name}.#{column}')")} #{self.db_like_string(ENV['DB'])} '%#{time}%'") }
+    scope :mysql_json_contains, ->(column, key, value) {"JSON_EXTRACT(#{column}, '$.\"#{key}\"') LIKE \"%#{value}%\""}
   end
 
 
-  ActiveRecord::Base.class_eval do
-    def update_by_params(params, set_nil = true)
+  def update_by_params(params, set_nil = true)
       ActiveRecord::Base.transaction do
         self.class.column_names.each do |c|
           begin
@@ -43,18 +42,30 @@ module DcidevActiveRecord
         self.save
       end
     end
+
+  class_methods do
+    #E.g: Order.top_ten
+    def mysql_date_builder(field)
+      "DATE(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
+    end
+
+    def mysql_time_builder(field)
+      "TIME(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
+    end
+
+    def postgresql_date_builder(field)
+      "DATE(#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'::INTERVAL)"
+    end
+
+    def postgresql_time_builder(field)
+      "#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'"
+    end
+    
+    def db_like_string(db)
+      return 'ILIKE' if db == 'postgresql'
+      return 'LIKE' if db == 'mysql'
+    end
   end
-
-  # ActiveRecord::Relation.instance_eval do
-  #   scope :between_date, -> (column, start_date, end_date) { where("#{self.date_builder("#{self.table_name}.#{column}")} BETWEEN ? AND ?", start_date, end_date) }
-  #   scope :before_or_equal_to_date, -> (column, date) { where("#{self.date_builder("#{self.table_name}.#{column}")} <= ?", date) }
-  #   scope :after_or_equal_to_date, -> (column, date) { where("#{self.date_builder("#{self.table_name}.#{column}")} >= ?", date) }
-  #   scope :at_time, -> (column, time) { where("#{self.time_builder("#{self.table_name}.#{column}")} LIKE ?", "%#{time}%") }
-  #   scope :mysql_json_contains, ->(column, key, value) {"JSON_EXTRACT(#{column}, '$.\"#{key}\"') LIKE \"%#{value}%\""}
-
-
-
-
-  # end
-
 end
+
+ActiveRecord::Base.send(:include, DcidevActiveRecord)
