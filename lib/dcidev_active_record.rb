@@ -22,6 +22,20 @@ module DcidevActiveRecord
     scope :mysql_json_contains, ->(column, key, value) {"JSON_EXTRACT(#{column}, '$.\"#{key}\"') LIKE \"%#{value}%\""}
   end
 
+  def replace_child_from_array(new_child = [], column_name: "", child_name: "")
+      new_child = new_child.to_a
+      formatted = []
+      existing_child = eval("self.#{child_name}")
+      existing_child_values = existing_child.pluck(column_name.to_sym)
+      delete_child = existing_child_values - new_child
+      (existing_child_values + new_child).uniq.each do |lc|
+          attr = { column_name => lc, "_destroy" => delete_child.include?(lc) }
+          id = existing_child.detect { |ec| eval("ec.#{column_name} == #{lc.is_a?(String) ? "'#{lc}'" : lc}") }
+          attr["id"] = id.id if id.present?
+          formatted << attr
+      end
+      formatted
+  end
 
   def update_by_params(params, set_nil = true)
       ActiveRecord::Base.transaction do
