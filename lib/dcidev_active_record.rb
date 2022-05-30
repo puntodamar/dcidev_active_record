@@ -118,6 +118,20 @@ module DcidevActiveRecord
       return 'LIKE' if db == 'mysql'
     end
   end
+
+  def init_nested_attributes(reflections)
+    reflections.each do |r|
+        define_method("#{r}_attributes=") do |attr|
+            if attr.present?
+                children = []
+                attr.each do |child|
+                    children << r.classify.constantize.find_or_initialize_by(child)
+                end
+                eval("self.#{r} = children")
+            end
+        end
+    end
+end
 end
 
 ActiveRecord::Base.send(:include, DcidevActiveRecord)
