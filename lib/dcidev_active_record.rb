@@ -105,16 +105,16 @@ module DcidevActiveRecord
       "TIME(CONVERT_TZ(#{field}, '+00:00', '#{Time.now.in_time_zone(Time.zone.name.to_s).formatted_offset}'))"
     end
 
-    def postgresql_date_builder(field)
+    def pgsql_date_builder(field)
       "DATE(#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'::INTERVAL)"
     end
 
-    def postgresql_time_builder(field)
+    def pgsql_time_builder(field)
       "#{field}::TIMESTAMPTZ AT TIME ZONE '#{Time.zone.now.formatted_offset}'"
     end
     
     def db_like_string(db)
-      return 'ILIKE' if db == 'postgresql'
+      return 'ILIKE' if db == 'pgsql'
       return 'LIKE' if db == 'mysql'
     end
   end
